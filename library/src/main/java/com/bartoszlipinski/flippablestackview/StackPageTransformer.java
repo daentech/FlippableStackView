@@ -128,14 +128,13 @@ public class StackPageTransformer implements ViewPager.PageTransformer {
                 break;
             case HORIZONTAL:
                 view.setRotationY(0);
-                view.setPivotX(dimen / 2f);
-                view.setPivotY(view.getHeight() / 2f);
                 break;
         }
 
         if (position < -mNumberOfStacked - 1) {
             view.setAlpha(0f);
         } else if (position <= 0) {
+            // This is the page behind the current one
             float scale = mZeroPositionScale + (position * mStackedScaleFactor);
             float baseTranslation = (-position * dimen);
             float shiftTranslation = calculateShiftForScale(position, scale, dimen);
@@ -147,10 +146,12 @@ public class StackPageTransformer implements ViewPager.PageTransformer {
                     view.setTranslationY(baseTranslation + shiftTranslation);
                     break;
                 case HORIZONTAL:
-                    view.setTranslationX(baseTranslation + shiftTranslation);
+                    view.setTranslationX(baseTranslation);
+                    view.setTranslationY(shiftTranslation);
                     break;
             }
         } else if (position <= 1) {
+            // This is the page being dismissed or returned
             float baseTranslation = position * dimen;
             float scale = mZeroPositionScale - mValueInterpolator.map(mScaleInterpolator.getInterpolation(position));
             scale = (scale < 0) ? 0f : scale;
@@ -169,11 +170,8 @@ public class StackPageTransformer implements ViewPager.PageTransformer {
                     view.setTranslationY(-baseTranslation - mBelowStackSpace - shiftTranslation);
                     break;
                 case HORIZONTAL:
-                    view.setPivotX(dimen);
-                    view.setRotationY(-rotation);
-                    view.setScaleY(mZeroPositionScale);
-                    view.setScaleX(scale);
-                    view.setTranslationX(-baseTranslation - mBelowStackSpace - shiftTranslation);
+                    // Set the x translation to the width of the item *
+                    view.setTranslationX(-baseTranslation - view.getWidth() * Math.abs(position));
                     break;
             }
         } else if (position > 1) {

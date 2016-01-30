@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Bartosz Lipinski
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -2235,97 +2235,38 @@ public class OrientedViewPager extends ViewGroup {
         }
     }
 
-    private boolean performDrag(float dimen) {
-        boolean needsInvalidate = false;
+    private boolean performDrag(float x) {
 
-        if (mOrientation == Orientation.VERTICAL) {
-            float y = dimen;
-            final float deltaY = mLastMotionY - y;
-            mLastMotionY = y;
+        final float deltaX = mLastMotionX - x;
+        mLastMotionX = x;
 
-            float oldScrollY = getScrollY();
-            float scrollY = oldScrollY + deltaY;
-            final int height = getClientSize();
+        float oldScrollX = getScrollX();
+        float scrollX = oldScrollX - deltaX;
+        final int width = getClientSize();
 
-            float topBound = height * mFirstOffset;
-            float bottomBound = height * mLastOffset;
-            boolean topAbsolute = true;
-            boolean bottomAbsolute = true;
+        float leftBound = width * mFirstOffset;
+        float rightBound = width * mLastOffset;
 
-            final ItemInfo firstItem = mItems.get(0);
-            final ItemInfo lastItem = mItems.get(mItems.size() - 1);
-            if (firstItem.position != 0) {
-                topAbsolute = false;
-                topBound = firstItem.offset * height;
-            }
-            if (lastItem.position != mAdapter.getCount() - 1) {
-                bottomAbsolute = false;
-                bottomBound = lastItem.offset * height;
-            }
-
-            if (scrollY < topBound) {
-                if (topAbsolute) {
-                    float over = topBound - scrollY;
-                    needsInvalidate = mTopLeftEdge.onPull(Math.abs(over) / height);
-                }
-                scrollY = topBound;
-            } else if (scrollY > bottomBound) {
-                if (bottomAbsolute) {
-                    float over = scrollY - bottomBound;
-                    needsInvalidate = mRightBottomEdge.onPull(Math.abs(over) / height);
-                }
-                scrollY = bottomBound;
-            }
-            // Don't lose the rounded component
-            mLastMotionX += scrollY - (int) scrollY;
-            scrollTo(getScrollX(), (int) scrollY);
-            pageScrolled((int) scrollY);
-        } else {
-            float x = dimen;
-
-            final float deltaX = mLastMotionX - x;
-            mLastMotionX = x;
-
-            float oldScrollX = getScrollX();
-            float scrollX = oldScrollX + deltaX;
-            final int width = getClientSize();
-
-            float leftBound = width * mFirstOffset;
-            float rightBound = width * mLastOffset;
-            boolean leftAbsolute = true;
-            boolean rightAbsolute = true;
-
-            final ItemInfo firstItem = mItems.get(0);
-            final ItemInfo lastItem = mItems.get(mItems.size() - 1);
-            if (firstItem.position != 0) {
-                leftAbsolute = false;
-                leftBound = firstItem.offset * width;
-            }
-            if (lastItem.position != mAdapter.getCount() - 1) {
-                rightAbsolute = false;
-                rightBound = lastItem.offset * width;
-            }
-
-            if (scrollX < leftBound) {
-                if (leftAbsolute) {
-                    float over = leftBound - scrollX;
-                    needsInvalidate = mTopLeftEdge.onPull(Math.abs(over) / width);
-                }
-                scrollX = leftBound;
-            } else if (scrollX > rightBound) {
-                if (rightAbsolute) {
-                    float over = scrollX - rightBound;
-                    needsInvalidate = mRightBottomEdge.onPull(Math.abs(over) / width);
-                }
-                scrollX = rightBound;
-            }
-            // Don't lose the rounded component
-            mLastMotionX += scrollX - (int) scrollX;
-            scrollTo((int) scrollX, getScrollY());
-            pageScrolled((int) scrollX);
+        final ItemInfo firstItem = mItems.get(0);
+        final ItemInfo lastItem = mItems.get(mItems.size() - 1);
+        if (firstItem.position != 0) {
+            leftBound = firstItem.offset * width;
+        }
+        if (lastItem.position != mAdapter.getCount() - 1) {
+            rightBound = lastItem.offset * width;
         }
 
-        return needsInvalidate;
+        if (scrollX < leftBound) {
+            scrollX = leftBound;
+        } else if (scrollX > rightBound) {
+            scrollX = rightBound;
+        }
+        // Don't lose the rounded component
+        mLastMotionX += scrollX - (int) scrollX;
+        scrollTo((int) scrollX, getScrollY());
+        pageScrolled((int) scrollX);
+
+        return false;
     }
 
     /**
@@ -2377,10 +2318,10 @@ public class OrientedViewPager extends ViewGroup {
     private int determineTargetPage(int currentPage, float pageOffset, int velocity, int deltaDimen) {
         int targetPage;
         if (Math.abs(deltaDimen) > mFlingDistance && Math.abs(velocity) > mMinimumVelocity) {
-            targetPage = velocity > 0 ? currentPage : currentPage + 1;
+            targetPage = velocity > 0 ? currentPage + 1 : currentPage;
         } else {
             final float truncator = currentPage >= mCurItem ? 0.4f : 0.6f;
-            targetPage = (int) (currentPage + pageOffset + truncator);
+            targetPage = (int) (currentPage - pageOffset - truncator);
         }
 
         if (mItems.size() > 0) {
